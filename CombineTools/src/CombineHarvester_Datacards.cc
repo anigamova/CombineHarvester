@@ -607,7 +607,11 @@ void CombineHarvester::FillHistMappings(std::vector<HistMapping> & mappings) {
   std::map<RooAbsReal const*, RooWorkspace*> pdf_ws_map;
   for (auto const& iter : wspaces_) {
     auto dat = iter.second->allData();
+
+    std::cout << " size iter.second->allData(); " << dat.size()<< std::endl;
     for (auto d : dat) {
+      std::cout << "filling data in FillHistMappings " << std::endl;
+      iter.second->Print();
       data_ws_map[d] = iter.second.get();
     }
     RooArgSet vars = iter.second->allPdfs();
@@ -947,6 +951,7 @@ void CombineHarvester::WriteDatacard(std::string const& name,
       // Also skip any workspace that isn't needed for this card
       if (!used_wsps.count(ws_it.second->GetName())) continue;
       ch::WriteToTFile(ws_it.second.get(), &root_file, ws_it.second->GetName());
+      //ws_it.second->writeToFile(root_file.GetName(), false);
     }
   }
 

@@ -668,6 +668,7 @@ std::shared_ptr<RooWorkspace> CombineHarvester::SetupWorkspace(
       FNLOGC(log(), verbosity_ >= 1)
           << "Workspace with name " << it.second->GetName()
           << " has the same UUID, will use this one\n";
+      it.second->Print();
       return it.second;
     }
     if (!name_in_use && strcmp(it.second->GetName(), ws.GetName()) == 0) {
@@ -728,6 +729,7 @@ std::shared_ptr<RooWorkspace> CombineHarvester::SetupWorkspace(
     new_wsp = std::make_shared<RooWorkspace>(RooWorkspace(ws));
   }
   new_wsp->SetName(new_name.c_str());
+  new_wsp->Print();
   wspaces_[new_name] = new_wsp;
   return wspaces_.at(new_name);
 }

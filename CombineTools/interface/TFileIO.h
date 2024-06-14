@@ -42,9 +42,13 @@ void ch::WriteToTFile(T * ptr, TFile* file, std::string const& path) {
       }
       gDirectory->cd(as_vec[i].c_str());
     }
-    if (!gDirectory->FindKey(as_vec.back().c_str())) {
+    if (!gDirectory->FindKey(as_vec.back().c_str()) && strcmp("w", as_vec.back().c_str()) != 0) {
       ptr->SetName(as_vec.back().c_str());
-      gDirectory->WriteTObject(ptr, as_vec.back().c_str());
+      ptr->SetTitle(as_vec.back().c_str());
+      std::cout << "Writing in WriteToTFile = " << as_vec.back().c_str() << "; name = "<<ptr->GetName()<< std::endl;
+      ptr->Print();
+      gDirectory->WriteObject(ptr, as_vec.back().c_str());
+      //gDirectory->WriteTObject(ptr, as_vec.back().c_str());
     }
     gDirectory->cd("/");
   }
