@@ -667,6 +667,9 @@ std::shared_ptr<RooWorkspace> CombineHarvester::SetupWorkspace(
       FNLOGC(log(), verbosity_ >= 1)
           << "Workspace with name " << it.second->GetName()
           << " has the same UUID, will use this one\n";
+      std::cout<<"original: " << std::endl; 
+      ws.Print();
+      std::cout<<"this: " << std::endl; 
       it.second->Print();
       return it.second;
     }
@@ -680,14 +683,27 @@ std::shared_ptr<RooWorkspace> CombineHarvester::SetupWorkspace(
     // - No: clone with same name and return
     // IMPORTANT: Don't used RooWorkspace::Clone(), it seems to introduce
     // bugs
+    std::shared_ptr<RooWorkspace> _wsp;
     if (GetFlag("workspaces-use-clone")) {
-      wspaces_[std::string(ws.GetName())] = std::shared_ptr<RooWorkspace>(
+      _wsp = std::shared_ptr<RooWorkspace>(
               reinterpret_cast<RooWorkspace*>(ws.Clone(ws.GetName()))
           );      
+      std::cout << "ws.allImbeddedData->size" << ws.allEmbeddedData().size() << std::endl;
+      std::cout << "clone std::shared_ptr<RooWorkspace> ws.allImbeddedData->size" << _wsp->allEmbeddedData().size() << std::endl;
+      std::cout << "clone ws.allImbeddedData->size" << reinterpret_cast<RooWorkspace*>(ws.Clone(ws.GetName()))->allEmbeddedData().size() << std::endl;
+      _wsp->Print();
+        auto dat_emb = ws.allEmbeddedData();
+        for (auto d: dat_emb) {
+          _wsp->import(*d, RooFit::Embedded());
+        }
+        _wsp->Print();
+      
     } else {
-      wspaces_[std::string(ws.GetName())] =
-          std::make_shared<RooWorkspace>(RooWorkspace(ws));  
+      _wsp = std::make_shared<RooWorkspace>(RooWorkspace(ws));  
     }
+    _wsp->SetName(ws.GetName());
+    _wsp->SetTitle(ws.GetTitle());
+    wspaces_[ws.GetName()] = _wsp;
     return wspaces_.at(ws.GetName());
   }
 
@@ -724,10 +740,16 @@ std::shared_ptr<RooWorkspace> CombineHarvester::SetupWorkspace(
     new_wsp = std::shared_ptr<RooWorkspace>(
             reinterpret_cast<RooWorkspace*>(ws.Clone(new_name.c_str()))
         );    
+        auto dat_emb = ws.allEmbeddedData();
+        for (auto d: dat_emb) {
+          new_wsp->import(*d, RooFit::Embedded());
+        }
+
   } else {
     new_wsp = std::make_shared<RooWorkspace>(RooWorkspace(ws));
   }
   new_wsp->SetName(new_name.c_str());
+  new_wsp->SetTitle(new_name.c_str());
   new_wsp->Print();
   wspaces_[new_name] = new_wsp;
   return wspaces_.at(new_name);

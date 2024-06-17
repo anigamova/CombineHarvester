@@ -606,17 +606,28 @@ void CombineHarvester::FillHistMappings(std::vector<HistMapping> & mappings) {
   std::map<RooAbsData const*, RooWorkspace*> data_ws_map;
   std::map<RooAbsReal const*, RooWorkspace*> pdf_ws_map;
   for (auto const& iter : wspaces_) {
+     std::cout << "in ws = " << iter.second->GetName() << std::endl;
     auto dat = iter.second->allData();
-
-    std::cout << " size iter.second->allData(); " << dat.size()<< std::endl;
-    for (auto d : dat) {
-      std::cout << "filling data in FillHistMappings " << std::endl;
-      iter.second->Print();
-      data_ws_map[d] = iter.second.get();
+    std::cout << "ws = " << iter.second->GetName() << "allData()->size()"<< dat.size()<< std::endl;
+    for (auto d: dat) {
+      
+      d->Print();
+      RooAbsData *y = dynamic_cast<RooAbsData*>(d);
+      
+      if (y) data_ws_map[iter.second->data(y->GetName())] = iter.second.get();
     }
+
+//    auto dat_emb = iter.second->allEmbeddedData();
+//    std::cout << "ws = " << iter.second->GetName() << "allEmbeddedData()->size()"<< dat_emb.size()<< std::endl;
+//    for (auto d: dat_emb) {
+//      d->Print();
+//      RooAbsData *y = dynamic_cast<RooAbsData*>(d);
+//      if (y) data_ws_map[iter.second->embeddedData(y->GetName())] = iter.second.get();
+//    }
+
     RooArgSet vars = iter.second->allPdfs();
     for (RooAbsArg *v : vars) {
-      RooRealVar *y = dynamic_cast<RooRealVar*>(v);
+      RooAbsPdf *y = dynamic_cast<RooAbsPdf*>(v);
 
       if (y) pdf_ws_map[iter.second->pdf(y->GetName())] = iter.second.get();
     }
@@ -692,36 +703,49 @@ void CombineHarvester::FillHistMappings(std::vector<HistMapping> & mappings) {
       if (!obs->data()) continue;
       std::string obj_name = std::string(data_ws_map[obs->data()]->GetName()) +
                              ":" + std::string(obs->data()->GetName());
+      std::cout << "trying to emplace " <<  obj_name << std::endl;
       mappings.emplace_back("data_obs", obs->bin(), obj_name, "");
+      std::cout << "worked: " <<  obj_name << std::endl;
+      std::cout << "scanning line: " <<  "709"<< std::endl;
     }
 
     bool prototype_ok = false;
     HistMapping prototype;
     std::vector<HistMapping> full_list;
     auto pmap = ch_bin.GenerateProcSystMap();
+    std::cout << "scanning line: " <<  "716"<< std::endl;
     for (unsigned i = 0; i < ch_bin.procs_.size(); ++i) {
       ch::Process * proc = ch_bin.procs_[i].get();
       if (!proc->data() && !proc->pdf()) continue;
       std::string obj_name;
       std::string obj_sys_name;
       if (proc->data()) {
+        
+        std::cout << "scanning line: " <<  "724"<< std::endl;
         obj_name = std::string(proc->data()->GetName());
+        std::cout << "scanning line: " <<  "726"<< std::endl;
         boost::replace_all(obj_name, proc->process(), "$PROCESS");
         obj_name = std::string(data_ws_map[proc->data()]->GetName()) + ":" +
                    obj_name;
+        std::cout << "scanning line: " <<  "730"<< std::endl;
       }
       if (proc->pdf()) {
+        std::cout << "scanning line: " <<  "733"<< std::endl;
         obj_name = std::string(proc->pdf()->GetName());
+        std::cout << "scanning line: " <<  "735"<< "; obj_name = "<< obj_name <<std::endl;
         boost::replace_all(obj_name, proc->process(), "$PROCESS");
         obj_name = std::string(pdf_ws_map[proc->pdf()]->GetName()) +
                    ":" + obj_name;
       }
+      std::cout << "scanning line: " <<  "740"<< std::endl;
       for (unsigned j = 0; j < pmap[i].size(); ++j) {
         ch::Systematic const* sys = pmap[i][j];
+        std::cout << "scanning line: " <<  "743"<< std::endl;
         if (sys->data_u()) {
           obj_sys_name = std::string(sys->data_u()->GetName());
           boost::replace_all(obj_sys_name, sys->name() + "Up", "$SYSTEMATIC");
           boost::replace_all(obj_sys_name, sys->process(), "$PROCESS");
+          std::cout << "scanning line: " <<  "748"<< std::endl;
           obj_sys_name = std::string(data_ws_map[sys->data_u()]->GetName()) +
                          ":" + obj_sys_name;
           break;
@@ -736,6 +760,7 @@ void CombineHarvester::FillHistMappings(std::vector<HistMapping> & mappings) {
         }
       }
 
+      std::cout << "scanning line: " <<  "758"<< std::endl;
       // If the prototype pattern is already filled, but doesn't equal this
       // new pattern - then we can't use the prototype
       if (prototype.pattern.size() && prototype.pattern != obj_name) {
@@ -757,8 +782,10 @@ void CombineHarvester::FillHistMappings(std::vector<HistMapping> & mappings) {
         prototype.syst_pattern = obj_sys_name;
       }
 
+      std::cout << "scanning line: " <<  "780"<< std::endl;
       full_list.emplace_back(proc->process(), proc->bin(), obj_name,
                              obj_sys_name);
+      std::cout << "scanning line: " <<  "783"<< std::endl;
     }
     // There are two reasons we won't want to write a generic mapping
     // for the processes in this bin:
@@ -767,9 +794,11 @@ void CombineHarvester::FillHistMappings(std::vector<HistMapping> & mappings) {
     if (!prototype_ok || hist_bins.count(bin)) {
       for (auto m : full_list) {
         mappings.push_back(m);
+        std::cout << "scanning line: " <<  "792"<< std::endl;
       }
     } else {
       mappings.push_back(prototype);
+      std::cout << "scanning line: " <<  "796"<< std::endl;
     }
   }
 }

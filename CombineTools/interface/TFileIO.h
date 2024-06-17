@@ -7,6 +7,8 @@
 #include "TFile.h"
 #include "TH1.h"
 #include "TDirectory.h"
+#include "RooWorkspace.h"
+
 #include "CombineHarvester/CombineTools/interface/Logging.h"
 
 namespace ch {
@@ -42,13 +44,16 @@ void ch::WriteToTFile(T * ptr, TFile* file, std::string const& path) {
       }
       gDirectory->cd(as_vec[i].c_str());
     }
-    if (!gDirectory->FindKey(as_vec.back().c_str()) && strcmp("w", as_vec.back().c_str()) != 0) {
-      ptr->SetName(as_vec.back().c_str());
-      ptr->SetTitle(as_vec.back().c_str());
+    if (!gDirectory->FindKey(as_vec.back().c_str())) { 
+      //ptr->SetName(as_vec.back().c_str());
+      //ptr->SetTitle(as_vec.back().c_str());
       std::cout << "Writing in WriteToTFile = " << as_vec.back().c_str() << "; name = "<<ptr->GetName()<< std::endl;
+      if (ptr->InheritsFrom(RooWorkspace::Class())) {
+          std::cout << " embedded size : " << (dynamic_cast<RooWorkspace*>(ptr))->allEmbeddedData().size()<< std::endl;
+      }
       ptr->Print();
-      gDirectory->WriteObject(ptr, as_vec.back().c_str());
-      //gDirectory->WriteTObject(ptr, as_vec.back().c_str());
+      //gDirectory->WriteObject(ptr, as_vec.back().c_str());
+      gDirectory->WriteTObject(ptr, as_vec.back().c_str());
     }
     gDirectory->cd("/");
   }
